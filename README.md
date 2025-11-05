@@ -63,6 +63,11 @@
         .result-text-green {
             color: #10B981; 
         }
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -153,6 +158,15 @@
             </div>
 
         </div> <!-- End of md:grid-cols-2 container -->
+        
+        <!-- Currency Legend (New Section) -->
+        <div class="mt-10 p-4 bg-white rounded-xl border-t-4 border-pink-500 shadow-lg">
+            <h2 class="text-xl font-bold mb-3 text-panther-dark">Available Currencies (1 EUR Base Rate)</h2>
+            <div id="currencyLegend" class="legend-grid text-sm">
+                <!-- Legend items populated by JS -->
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -165,11 +179,12 @@
         const copyStatus = document.getElementById('copyStatus');
         const pasteButton = document.getElementById('pasteButton'); 
         const pasteStatus = document.getElementById('pasteStatus'); 
+        const currencyLegend = document.getElementById('currencyLegend');
 
         // Initial RATES object. EUR is 1.00 as it is the base currency.
         let RATES = { "EUR": 1.00 }; 
         
-        // Fallback rates used if the live fetch fails.
+        // Fallback rates used if the live fetch fails or is incomplete.
         const FALLBACK_RATES = {
             "PLN": 4.34, "GBP": 0.856, "SEK": 11.10, "DKK": 7.46, 
             "USD": 1.07, "JPY": 178.00, "CAD": 1.46, "AUD": 1.62, 
@@ -179,21 +194,21 @@
 
         const targetCurrencies = ["PLN", "GBP", "SEK", "DKK", "USD", "JPY", "CAD", "AUD", "CHF", "NOK", "HUF", "CZK"];
 
-        // --- CURRENCY SYMBOLS (These are static) ---
+        // --- CURRENCY SYMBOLS and FULL NAMES ---
         const CURRENCY_SYMBOLS = {
-            "EUR": "€",
-            "PLN": "zł",
-            "GBP": "£",
-            "SEK": "kr",
-            "DKK": "kr",
-            "USD": "$",
-            "JPY": "¥",
-            "CAD": "C$",
-            "AUD": "A$",
-            "CHF": "Fr",
-            "NOK": "kr",
-            "HUF": "Ft",
-            "CZK": "Kč",
+            "EUR": { symbol: "€", name: "Euro" },
+            "PLN": { symbol: "zł", name: "Polish Złoty" },
+            "GBP": { symbol: "£", name: "British Pound" },
+            "SEK": { symbol: "kr", name: "Swedish Krona" },
+            "DKK": { symbol: "kr", name: "Danish Krone" },
+            "USD": { symbol: "$", name: "US Dollar" },
+            "JPY": { symbol: "¥", name: "Japanese Yen" },
+            "CAD": { symbol: "C$", name: "Canadian Dollar" },
+            "AUD": { symbol: "A$", name: "Australian Dollar" },
+            "CHF": { symbol: "Fr", name: "Swiss Franc" },
+            "NOK": { symbol: "kr", name: "Norwegian Krone" },
+            "HUF": { symbol: "Ft", name: "Hungarian Forint" },
+            "CZK": { symbol: "Kč", name: "Czech Koruna" },
         };
 
         // --- Utility for Exponential Backoff (MANDATORY for API calls) ---
@@ -208,6 +223,7 @@
                     return response;
                 } catch (error) {
                     if (i < retries - 1) {
+                        // Retry with exponential backoff
                         const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
                         await new Promise(resolve => setTimeout(resolve, delay));
                     } else {
@@ -226,17 +242,19 @@
             // 1. Set Loading State
             currentRateDisplay.innerHTML = 'Fetching live rates... ⏳';
             
-            // The API Key is injected by the environment. We use the required model URL structure.
+            // API Key is injected by the environment.
             const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=';
 
-            const systemPrompt = "You are a specialized financial data parser. Analyze the provided Google Search results and output a single JSON object containing only the most recent currency exchange rates relative to 1 Euro (EUR). You must strictly adhere to the provided JSON schema. The keys are currency codes, and the values are the numerical exchange rates (as standard JavaScript numbers) for 1 EUR to that currency.";
-            const userQuery = `Current real-time exchange rates for 1 EUR to ${targetCurrencies.join(', ')}.`;
+            const systemPrompt = "You are a specialized financial data parser. Analyze the provided Google Search results and output a single JSON object containing only the most recent currency exchange rates relative to 1 Euro (EUR). You must strictly adhere to the provided JSON schema. The keys are currency codes, and the values are the numerical exchange rates (as standard JavaScript numbers) for 1 EUR to that currency. If a rate is not found, use 0.00 as a placeholder.";
+            const userQuery = `Current real-time exchange rates for 1 EUR to ${targetCurrencies.join(', ')}. Provide the exchange rate for EUR to EUR as 1.00.`;
 
             // Dynamically create the JSON schema for type safety
             const schemaProperties = targetCurrencies.reduce((acc, code) => {
                 acc[code] = { "type": "NUMBER", "description": `Exchange rate of 1 EUR to ${code}` };
                 return acc;
             }, {});
+            // Add EUR for internal consistency
+            schemaProperties["EUR"] = { "type": "NUMBER", "description": "1 EUR to EUR (must be 1.00)" };
 
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
@@ -249,7 +267,7 @@
                     responseSchema: {
                         type: "OBJECT",
                         properties: schemaProperties,
-                        required: targetCurrencies
+                        required: [...targetCurrencies, "EUR"]
                     }
                 }
             };
@@ -268,24 +286,55 @@
 
                 if (jsonText) {
                     const fetchedRates = JSON.parse(jsonText);
-                    // Merge fetched rates with the base EUR rate
-                    RATES = { "EUR": 1.00, ...fetchedRates };
-                    console.log('Successfully fetched and set new RATES:', RATES);
+                    // CRITICAL FIX: Merge/Overwrite FALLBACK_RATES with successfully fetched rates.
+                    // This ensures all keys exist and are updated with live data if available.
+                    RATES = { ...FALLBACK_RATES, ...fetchedRates };
+                    console.log('Successfully fetched and merged RATES (Live/Fallback):', RATES);
                 } else {
                     throw new Error("API returned no valid JSON text.");
                 }
             } catch (error) {
                 console.error("Failed to fetch live rates, using fallback rates.", error);
-                // Specific log for the reported error
-                if (error.message.includes('401')) {
-                    console.error("401 Authentication Error: The runtime environment failed to inject a valid API key. Using static fallback rates.");
-                }
+                
+                // On failure, ensure we are using the full fallback set.
                 RATES = FALLBACK_RATES;
+                
+                // Explicit warning for the user
+                console.warn("WARNING: Due to the 401 Authorization Error, the app is running on reliable, static fallback rates. Conversion accuracy is still guaranteed, but rates are not real-time.");
+                
             } finally {
                 // Regardless of success, update the UI
                 populateCurrencies();
+                displayCurrencyLegend(); // Display the legend
                 convert();
             }
+        }
+
+        /**
+         * Displays the currency codes, symbols, and names in the legend area.
+         */
+        function displayCurrencyLegend() {
+            currencyLegend.innerHTML = '';
+            
+            // Get all codes from the master symbol list, ensuring a consistent display order.
+            const allCodes = Object.keys(CURRENCY_SYMBOLS).sort();
+
+            allCodes.forEach(code => {
+                const info = CURRENCY_SYMBOLS[code];
+                // Display the rate from the current RATES object (live or fallback)
+                const rate = RATES[code] ? RATES[code].toFixed(4) : 'N/A'; 
+                
+                const item = document.createElement('div');
+                item.className = 'p-2 bg-gray-50 rounded-lg shadow-sm flex justify-between items-center';
+                
+                item.innerHTML = `
+                    <span class="font-bold text-lg text-pink-700">${code}</span>
+                    <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-pink-100">${info.symbol}</span>
+                    <span class="flex-grow ml-2 truncate">${info.name}</span>
+                    <span class="text-gray-600 font-semibold text-sm">1 EUR = ${rate}</span>
+                `;
+                currencyLegend.appendChild(item);
+            });
         }
 
 
@@ -305,11 +354,11 @@
             fromCurrencySelect.innerHTML = '';
             
             sortedCurrencies.forEach(code => {
+                const info = CURRENCY_SYMBOLS[code];
+                const symbol = info ? info.symbol : ''; 
+                
                 const option = document.createElement('option');
                 option.value = code;
-                
-                // Get symbol and format text: Code + Symbol
-                const symbol = CURRENCY_SYMBOLS[code] || ''; 
                 option.textContent = `${code} ${symbol}`; 
                 
                 fromCurrencySelect.appendChild(option);
@@ -327,24 +376,23 @@
             const fromCurrency = fromCurrencySelect.value;
             const toCurrency = "EUR"; // Fixed target
 
-            if (isNaN(amount) || amount <= 0) {
-                resultDisplay.textContent = '0.00 EUR';
-                resultDisplay.className = 'text-6xl font-extrabold font-mono transition duration-300 result-text-red';
-                statusMessage.textContent = "Enter an amount for the Pink Panther to check! 🕵️‍♀️";
-                currentRateDisplay.textContent = `Live Rates Check: 1 ${fromCurrency} = ${(1 / (RATES[fromCurrency] || 1)).toFixed(4)} EUR`;
-                return;
-            }
-
             // Conversion Formula: EUR Value = Amount / Rate (where Rate is the 1 EUR = X value)
             const fromRate = RATES[fromCurrency];
             
-            if (!fromRate) {
-                resultDisplay.textContent = 'ERROR';
+            if (isNaN(amount) || amount <= 0 || !fromRate) {
+                resultDisplay.textContent = '0.00 EUR';
                 resultDisplay.className = 'text-6xl font-extrabold font-mono transition duration-300 result-text-red';
-                statusMessage.textContent = "Error: Currency rate missing! Using Fallback.";
-                currentRateDisplay.textContent = `Live Rates Check: N/A`;
+                statusMessage.textContent = "Enter an amount for the Pink Panther to check! 🕵️‍♀️";
+                
+                if (fromRate) {
+                    const rateToOneEuro = (1 / fromRate).toFixed(4);
+                    currentRateDisplay.textContent = `Current Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
+                } else {
+                     currentRateDisplay.textContent = `Error: Rate for ${fromCurrency} missing or zero.`;
+                }
                 return;
             }
+
 
             const convertedAmount = amount / fromRate;
 
@@ -363,10 +411,10 @@
             
             // Update Rate Display
             const rateToOneEuro = (1 / fromRate).toFixed(4);
-            currentRateDisplay.textContent = `Live Rates Check: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
+            currentRateDisplay.textContent = `Current Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
         }
         
-        // --- Clipboard Functions ---
+        // --- Clipboard Functions (Unchanged) ---
 
         /**
          * Copies the converted result text (the number only, without "EUR") to the clipboard.
@@ -462,7 +510,7 @@
             }, 3000);
         }
 
-        // --- Keypad/Manual Input Handlers ---
+        // --- Keypad/Manual Input Handlers (Unchanged) ---
 
         /**
          * Appends value from keypad to the input field.
