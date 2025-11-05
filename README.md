@@ -25,51 +25,57 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 1rem; /* Added padding for smaller screens */
+            padding: 0.5rem; /* Reduced overall padding */
+            margin: 0;
         }
         .panther-card {
             background-color: var(--panther-light);
-            border: 8px solid var(--panther-deep-pink); /* Deep pink border */
-            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.5), 0 0 10px rgba(0, 0, 0, 0.2);
+            border: 6px solid var(--panther-deep-pink); /* Slightly thinner border */
+            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.5), 0 0 8px rgba(0, 0, 0, 0.2);
+            /* Adjust max-width for better use of space */
+            max-width: 400px; 
+            width: 100%;
         }
         .keypad-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 0.5rem;
+            gap: 0.4rem; /* Reduced gap */
         }
         .calc-btn {
             background-color: var(--calc-bg);
             color: var(--calc-btn-text);
             font-weight: 600;
             transition: background-color 0.1s ease, transform 0.1s ease;
+            padding: 0.8rem; /* Reduced button padding */
+            min-height: 50px; /* Ensure a minimum touch target size */
         }
         .calc-btn:hover {
-            background-color: #f0cce9; /* Slightly darker shade on hover */
+            background-color: #f0cce9; 
             transform: scale(1.02);
         }
         .calc-btn.action {
-            background-color: var(--panther-deep-pink); /* Deep pink for action buttons */
+            background-color: var(--panther-deep-pink); 
             color: white;
             font-family: 'Bebas Neue', sans-serif;
             letter-spacing: 1px;
         }
         .calc-btn.action:hover {
-            background-color: #f04e8d; /* Lighter deep pink on hover */
+            background-color: #f04e8d; 
         }
         .result-text-red {
-            color: #EF4444; /* Tailwind red-500 */
+            color: #EF4444; 
         }
         .result-text-green {
-            color: #10B981; /* Tailwind emerald-500 */
+            color: #10B981; 
         }
     </style>
 </head>
-<body class="p-4">
+<body class="p-2">
 
-    <div id="app" class="panther-card max-w-lg w-full p-6 rounded-3xl">
-        <h1 class="text-4xl text-center font-bold mb-4" style="font-family: 'Bebas Neue', sans-serif; color: var(--panther-dark);">
-            <span class="text-xs block tracking-widest">THE INTERNATIONAL HEIST FUND 🕵️‍♀️</span>
-            <span class="text-6xl text-pink-600">P<span class="text-gray-800">I</span>NK</span> CONVERTER 🐾
+    <div id="app" class="panther-card max-w-lg w-full p-4 rounded-2xl">
+        <h1 class="text-4xl text-center font-bold mb-3" style="font-family: 'Bebas Neue', sans-serif; color: var(--panther-dark);">
+            <span class="text-xs block tracking-widest leading-none">THE INTERNATIONAL HEIST FUND 🕵️‍♀️</span>
+            <span class="text-5xl text-pink-600">P<span class="text-gray-800">I</span>NK</span> CONVERTER 🐾
         </h1>
 
         <!-- Conversion Rates (Hardcoded Fictional Rates Relative to 1 EUR) -->
@@ -94,53 +100,53 @@
         </script>
 
         <!-- Display/Input Area -->
-        <div class="mb-6 bg-white border border-gray-300 rounded-xl shadow-inner p-4">
+        <div class="mb-4 bg-white border border-gray-300 rounded-lg shadow-inner p-3">
             <div class="flex items-center justify-between mb-2">
-                <label for="fromCurrencySelect" class="text-sm font-semibold text-gray-500">I have: 💎</label>
-                <select id="fromCurrencySelect" class="bg-gray-100 border border-gray-300 rounded-lg p-2 text-xl font-mono focus:ring-panther-deep-pink focus:border-panther-deep-pink transition duration-150">
+                <label for="fromCurrencySelect" class="text-xs font-semibold text-gray-500">I have: 💎</label>
+                <select id="fromCurrencySelect" class="bg-gray-100 border border-gray-300 rounded-md p-1 text-lg font-mono focus:ring-panther-deep-pink focus:border-panther-deep-pink transition duration-150">
                     <!-- Options populated by JS -->
                 </select>
             </div>
             
-            <input type="text" id="amountInput" value="0" class="w-full text-5xl font-mono text-right border-none focus:ring-0 p-0 bg-transparent tracking-tight" placeholder="0" oninput="manualInputConvert()">
+            <input type="text" id="amountInput" value="0" class="w-full text-4xl font-mono text-right border-none focus:ring-0 p-0 bg-transparent tracking-tight" placeholder="0" oninput="manualInputConvert()">
 
-            <div class="text-sm text-gray-500 mt-2 text-right">
+            <div class="text-xs text-gray-500 mt-1 text-right">
                 <span id="currentRateDisplay">...</span>
             </div>
         </div>
 
         <!-- Result Display -->
-        <div class="text-center mb-6 p-4 bg-gray-100 rounded-xl border border-gray-300">
-            <p class="text-xl font-semibold text-gray-500">Converted Value (The Loot) 💰</p>
-            <p id="resultDisplay" class="text-6xl font-extrabold font-mono transition duration-300 result-text-red">
+        <div class="text-center mb-4 p-3 bg-gray-100 rounded-lg border border-gray-300">
+            <p class="text-base font-semibold text-gray-500">Converted Value (The Loot) 💰</p>
+            <p id="resultDisplay" class="text-5xl font-extrabold font-mono transition duration-300 result-text-red">
                 0.00 EUR
             </p>
-            <p id="statusMessage" class="mt-2 text-sm text-gray-700 font-semibold italic">A small prize. Better luck next time. 💔</p>
+            <p id="statusMessage" class="mt-1 text-xs text-gray-700 font-semibold italic">A small prize. Better luck next time. 💔</p>
         </div>
 
         <!-- Calculator Keypad and Currency Buttons -->
         <div class="keypad-grid">
             <!-- Row 1 -->
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('7')">7</button>
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('8')">8</button>
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('9')">9</button>
-            <button class="calc-btn action rounded-xl p-4 text-sm bg-pink-600 hover:bg-pink-700" onclick="clearInput()">CLEAR 🗑️</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('7')">7</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('8')">8</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('9')">9</button>
+            <button class="calc-btn action rounded-lg text-xs bg-pink-600 hover:bg-pink-700" onclick="clearInput()">CLEAR 🗑️</button>
             
             <!-- Row 2 -->
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('4')">4</button>
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('5')">5</button>
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('6')">6</button>
-            <button class="calc-btn action rounded-xl p-4 text-sm bg-pink-700 hover:bg-pink-800" onclick="backspaceInput()">DELETE ❌</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('4')">4</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('5')">5</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('6')">6</button>
+            <button class="calc-btn action rounded-lg text-xs bg-pink-700 hover:bg-pink-800" onclick="backspaceInput()">DELETE ❌</button>
 
             <!-- Row 3 -->
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('1')">1</button>
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('2')">2</button>
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('3')">3</button>
-            <button class="calc-btn action rounded-xl p-4 text-2xl" onclick="appendToInput('.')">.</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('1')">1</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('2')">2</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('3')">3</button>
+            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('.')">.</button>
 
             <!-- Row 4 -->
-            <button class="calc-btn action rounded-xl p-4 text-2xl col-span-2" onclick="appendToInput('0')">0</button>
-            <button class="calc-btn action rounded-xl p-4 text-xl col-span-2 bg-pink-500 hover:bg-pink-600" onclick="convert()">CONVERT 🐾</button>
+            <button class="calc-btn action rounded-lg text-xl col-span-2" onclick="appendToInput('0')">0</button>
+            <button class="calc-btn action rounded-lg text-sm col-span-2 bg-pink-500 hover:bg-pink-600" onclick="convert()">CONVERT 🐾</button>
         </div>
     </div>
 
@@ -187,7 +193,7 @@
 
             if (isNaN(amount) || amount <= 0) {
                 resultDisplay.textContent = '0.00 EUR';
-                resultDisplay.className = 'text-6xl font-extrabold font-mono transition duration-300 result-text-red';
+                resultDisplay.className = 'text-5xl font-extrabold font-mono transition duration-300 result-text-red';
                 statusMessage.textContent = "Enter an amount for the Pink Panther to check! 🕵️‍♀️";
                 currentRateDisplay.textContent = `Rate: 1 ${fromCurrency} = ${(RATES['EUR'] / RATES[fromCurrency]).toFixed(4)} EUR (Fictional)`;
                 return;
@@ -198,7 +204,7 @@
             
             if (!fromRate) {
                 resultDisplay.textContent = 'ERROR';
-                resultDisplay.className = 'text-6xl font-extrabold font-mono transition duration-300 result-text-red';
+                resultDisplay.className = 'text-5xl font-extrabold font-mono transition duration-300 result-text-red';
                 statusMessage.textContent = "Error: Currency rate missing!";
                 currentRateDisplay.textContent = `Rate: N/A`;
                 return;
@@ -209,10 +215,10 @@
             // --- Apply Color Coding Rule ---
             const threshold = 100;
             if (convertedAmount > threshold) {
-                resultDisplay.className = 'text-6xl font-extrabold font-mono transition duration-300 result-text-green';
+                resultDisplay.className = 'text-5xl font-extrabold font-mono transition duration-300 result-text-green';
                 statusMessage.textContent = "Jackpot! The vault is full! 💰✨ (Above 100 EUR)";
             } else {
-                resultDisplay.className = 'text-6xl font-extrabold font-mono transition duration-300 result-text-red';
+                resultDisplay.className = 'text-5xl font-extrabold font-mono transition duration-300 result-text-red';
                 statusMessage.textContent = "A small prize. Better luck next time. 💔 (Under 100 EUR)";
             }
 
