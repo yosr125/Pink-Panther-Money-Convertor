@@ -1,417 +1,103 @@
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink Panther Currency Converter 🐾</title>
-    
-    <!-- Load Tailwind CSS -->
+    <title>Full-Width Responsive Layout</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --panther-deep-pink: #E91E63; /* A deep, elegant pink */
-            --panther-light-pink: #FFCCD2; /* Softer, lighter pink for background */
-            --panther-dark: #333333;
-            --panther-light: #F8F8F8;
-            --calc-bg: #E0BBE4; /* A lighter purple/pink for calculator buttons */
-            --calc-btn-text: #333333;
+        /* Optional: Smooth transition for hover effects */
+        .card {
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--panther-light-pink); /* Lighter pink background */
-            background-image: linear-gradient(135deg, #FFCCD2 0%, #FFB5C5 100%); /* Soft pink gradient */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 0.5rem; 
-            margin: 0;
-        }
-        .panther-card {
-            background-color: var(--panther-light);
-            border: 6px solid var(--panther-deep-pink); 
-            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.5), 0 0 8px rgba(0, 0, 0, 0.2);
-            /* INCREASED WIDTH: Set max-width to 550px for a wider feel */
-            max-width: 550px; 
-            width: 100%;
-        }
-        .keypad-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.4rem; 
-        }
-        .calc-btn {
-            background-color: var(--calc-bg);
-            color: var(--calc-btn-text);
-            font-weight: 600;
-            transition: background-color 0.1s ease, transform 0.1s ease;
-            padding: 0.8rem; 
-            min-height: 50px; 
-        }
-        .calc-btn:hover {
-            background-color: #f0cce9; 
-            transform: scale(1.02);
-        }
-        .calc-btn.action {
-            background-color: var(--panther-deep-pink); 
-            color: white;
-            font-family: 'Bebas Neue', sans-serif;
-            letter-spacing: 1px;
-        }
-        .calc-btn.action:hover {
-            background-color: #f04e8d; 
-        }
-        .result-text-red {
-            color: #EF4444; 
-        }
-        .result-text-green {
-            color: #10B981; 
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
-<body class="p-2">
+<body class="bg-gray-50 font-sans text-gray-800">
 
-    <div id="app" class="panther-card max-w-lg w-full p-4 rounded-2xl">
-        <h1 class="text-4xl text-center font-bold mb-3" style="font-family: 'Bebas Neue', sans-serif; color: var(--panther-dark);">
-            <span class="text-xs block tracking-widest leading-none">THE INTERNATIONAL HEIST FUND 🕵️‍♀️</span>
-            <span class="text-5xl text-pink-600">P<span class="text-gray-800">I</span>NK</span> CONVERTER 🐾
-        </h1>
+    <!-- 
+        The key change is here: 
+        We use w-full (width: 100%) and omit max-w-X classes 
+        on the main content container to ensure it fills the entire width.
+    -->
+    <div class="min-h-screen flex flex-col">
 
-        <!-- Conversion Rates (Hardcoded Fictional Rates Relative to 1 EUR) -->
-        <script>
-            // --- 🕵️‍♀️ HARDCODED FICTIONAL EXCHANGE RATES (1 EUR = X Currency) ---
-            // These rates are for demonstration purposes and are NOT real-time.
-            const RATES = {
-                "EUR": 1.00,  // Euro (The Base)
-                "PLN": 4.35,  // Polish Złoty (Important)
-                "GBP": 0.85,  // British Pound (Important)
-                "SEK": 11.20, // Swedish Krona (Important)
-                "DKK": 7.45,  // Danish Krone (Important)
-                "USD": 1.08,  // US Dollar
-                "JPY": 170.00, // Japanese Yen
-                "CAD": 1.47,  // Canadian Dollar
-                "AUD": 1.63,  // Australian Dollar
-                "CHF": 0.98,  // Swiss Franc
-                "NOK": 11.90, // Norwegian Krone
-                "HUF": 400.00, // Hungarian Forint
-                "CZK": 25.00, // Czech Koruna
-            };
-        </script>
-
-        <!-- Display/Input Area -->
-        <div class="mb-4 bg-white border border-gray-300 rounded-lg shadow-inner p-3">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
-                    <label for="fromCurrencySelect" class="text-xs font-semibold text-gray-500">I have: 💎</label>
-                    <!-- NEW PASTE BUTTON -->
-                    <button id="pasteButton" class="text-xs px-2 py-0.5 rounded text-white bg-pink-500 hover:bg-pink-600 transition duration-150 shadow-sm" title="Paste Value">
-                        PASTE 📋
-                    </button>
-                </div>
-                <select id="fromCurrencySelect" class="bg-gray-100 border border-gray-300 rounded-md p-1 text-lg font-mono focus:ring-panther-deep-pink focus:border-panther-deep-pink transition duration-150">
-                    <!-- Options populated by JS -->
-                </select>
+        <!-- Header: Full Width -->
+        <header class="bg-indigo-600 shadow-lg text-white p-4">
+            <div class="w-full px-4 sm:px-6 lg:px-8">
+                <h1 class="text-2xl font-bold">Full Width Application Header</h1>
+                <p class="text-indigo-200">This navigation bar spans 100% of the screen width.</p>
             </div>
+        </header>
+
+        <!-- Main Content Area: Full Width -->
+        <main class="flex-grow p-4 sm:p-6 lg:p-8">
             
-            <input type="text" id="amountInput" value="0" class="w-full text-4xl font-mono text-right border-none focus:ring-0 p-0 bg-transparent tracking-tight" placeholder="0" oninput="manualInputConvert()">
+            <!-- Content Wrapper: Also using w-full -->
+            <div class="w-full space-y-8">
+                
+                <!-- Section 1: Demonstrating Full Width Text -->
+                <section class="bg-white p-6 shadow-xl rounded-xl">
+                    <h2 class="text-xl font-semibold text-indigo-700 mb-4">Responsive Full-Width Container</h2>
+                    <p class="mb-4">
+                        This content block utilizes the **w-full** utility, ensuring it stretches to fit the maximum available horizontal space on any device. 
+                        Padding (`p-6`) and margins (`mb-4`) are used for spacing, but the container itself takes up 100% of the parent's width.
+                    </p>
+                    <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-md">
+                        <p class="text-sm text-indigo-700">
+                            On smaller mobile screens, the content adjusts fluidly, preventing horizontal scrolling.
+                        </p>
+                    </div>
+                </section>
+                
+                <!-- Section 2: Full Width Grid Example (3 columns on desktop, 1 on mobile) -->
+                <section>
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Full-Width Card Grid (Responsive)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Card 1 -->
+                        <div class="card bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">Service A</h3>
+                            <p class="text-gray-600">This column is a third of the width on large screens, ensuring the entire row still fills the page.</p>
+                        </div>
+                        
+                        <!-- Card 2 -->
+                        <div class="card bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">Service B</h3>
+                            <p class="text-gray-600">The grid automatically reflows to fewer columns on tablet (`md:`) and mobile screens.</p>
+                        </div>
 
-            <div class="text-xs text-gray-500 mt-1 text-right">
-                <span id="currentRateDisplay">...</span>
+                        <!-- Card 3 -->
+                        <div class="card bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">Service C</h3>
+                            <p class="text-gray-600">Resize your browser window to see how these cards adapt to the full available width.</p>
+                        </div>
+                    </div>
+                </section>
             </div>
-            <!-- NEW PASTE STATUS MESSAGE -->
-            <p id="pasteStatus" class="mt-1 text-xs font-medium text-blue-600 hidden text-right">Pasted successfully! 📋</p>
-        </div>
 
-        <!-- Result Display -->
-        <div class="text-center mb-4 p-3 bg-gray-100 rounded-lg border border-gray-300">
-            <p class="text-base font-semibold text-gray-500">Converted Value (The Loot) 💰</p>
-            <div class="flex items-center justify-center space-x-2">
-                <p id="resultDisplay" class="text-5xl font-extrabold font-mono transition duration-300 result-text-red">
-                    0.00 EUR
-                </p>
-                <button id="copyButton" class="text-xl p-2 rounded-full text-white bg-pink-500 hover:bg-pink-600 transition duration-150 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50" title="Copy Result">
-                    <!-- Copy Icon SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v2M9 16l3-3m0 0l3 3m-3-3v8" />
-                    </svg>
-                </button>
+        </main>
+
+        <!-- Footer: Full Width -->
+        <footer class="bg-gray-800 text-white p-4">
+            <div class="w-full px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
+                <p>&copy; 2024 Full Width App. All rights reserved.</p>
             </div>
-            <p id="statusMessage" class="mt-1 text-xs text-gray-700 font-semibold italic">A small prize. Better luck next time. 💔</p>
-            <p id="copyStatus" class="mt-1 text-xs font-medium text-green-600 hidden">Copied to clipboard! ✅</p>
-        </div>
+        </footer>
 
-        <!-- Calculator Keypad and Currency Buttons -->
-        <div class="keypad-grid">
-            <!-- Row 1 -->
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('7')">7</button>
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('8')">8</button>
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('9')">9</button>
-            <button class="calc-btn action rounded-lg text-xs bg-pink-600 hover:bg-pink-700" onclick="clearInput()">CLEAR 🗑️</button>
-            
-            <!-- Row 2 -->
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('4')">4</button>
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('5')">5</button>
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('6')">6</button>
-            <button class="calc-btn action rounded-lg text-xs bg-pink-700 hover:bg-pink-800" onclick="backspaceInput()">DELETE ❌</button>
-
-            <!-- Row 3 -->
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('1')">1</button>
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('2')">2</button>
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('3')">3</button>
-            <button class="calc-btn action rounded-lg text-xl" onclick="appendToInput('.')">.</button>
-
-            <!-- Row 4 -->
-            <button class="calc-btn action rounded-lg text-xl col-span-2" onclick="appendToInput('0')">0</button>
-            <button class="calc-btn action rounded-lg text-sm col-span-2 bg-pink-500 hover:bg-pink-600" onclick="convert()">CONVERT 🐾</button>
-        </div>
     </div>
-
-    <script>
-        const amountInput = document.getElementById('amountInput');
-        const fromCurrencySelect = document.getElementById('fromCurrencySelect');
-        const resultDisplay = document.getElementById('resultDisplay');
-        const currentRateDisplay = document.getElementById('currentRateDisplay');
-        const statusMessage = document.getElementById('statusMessage');
-        const copyButton = document.getElementById('copyButton');
-        const copyStatus = document.getElementById('copyStatus');
-        const pasteButton = document.getElementById('pasteButton'); // Added
-        const pasteStatus = document.getElementById('pasteStatus'); // Added
-
-        // --- Core Functions ---
-
-        /**
-         * Populates the currency dropdown based on the RATES object.
-         * Prioritizes GBP, PLN, SEK, DKK.
-         */
-        function populateCurrencies() {
-            // GBP is now the first priority!
-            const prioritized = ["GBP", "PLN", "SEK", "DKK", "EUR"];
-            const other = Object.keys(RATES).filter(c => !prioritized.includes(c)).sort();
-            
-            const sortedCurrencies = [...prioritized.filter(c => RATES.hasOwnProperty(c)), ...other];
-
-            fromCurrencySelect.innerHTML = '';
-            
-            sortedCurrencies.forEach(code => {
-                const option = document.createElement('option');
-                option.value = code;
-                option.textContent = code;
-                fromCurrencySelect.appendChild(option);
-            });
-            
-            // Set default currency to GBP
-            fromCurrencySelect.value = "GBP";
-        }
-
-        /**
-         * Performs the currency conversion based on current input and selection.
-         */
-        function convert() {
-            let amount = parseFloat(amountInput.value) || 0;
-            const fromCurrency = fromCurrencySelect.value;
-            const toCurrency = "EUR"; // Fixed target
-
-            if (isNaN(amount) || amount <= 0) {
-                resultDisplay.textContent = '0.00 EUR';
-                resultDisplay.className = 'text-5xl font-extrabold font-mono transition duration-300 result-text-red';
-                statusMessage.textContent = "Enter an amount for the Pink Panther to check! 🕵️‍♀️";
-                currentRateDisplay.textContent = `Rate: 1 ${fromCurrency} = ${(RATES['EUR'] / RATES[fromCurrency]).toFixed(4)} EUR (Fictional)`;
-                return;
-            }
-
-            // Conversion Formula: EUR Value = Amount / Rate (where Rate is the 1 EUR = X value)
-            const fromRate = RATES[fromCurrency];
-            
-            if (!fromRate) {
-                resultDisplay.textContent = 'ERROR';
-                resultDisplay.className = 'text-5xl font-extrabold font-mono transition duration-300 result-text-red';
-                statusMessage.textContent = "Error: Currency rate missing!";
-                currentRateDisplay.textContent = `Rate: N/A`;
-                return;
-            }
-
-            const convertedAmount = amount / fromRate;
-
-            // --- Apply Color Coding Rule ---
-            const threshold = 100;
-            if (convertedAmount > threshold) {
-                resultDisplay.className = 'text-5xl font-extrabold font-mono transition duration-300 result-text-green';
-                statusMessage.textContent = "Jackpot! The vault is full! 💰✨ (Above 100 EUR)";
-            } else {
-                resultDisplay.className = 'text-5xl font-extrabold font-mono transition duration-300 result-text-red';
-                statusMessage.textContent = "A small prize. Better luck next time. 💔 (Under 100 EUR)";
-            }
-
-            // Update Display
-            resultDisplay.textContent = `${convertedAmount.toFixed(2)} EUR`;
-            
-            // Update Rate Display
-            const rateToOneEuro = (1 / fromRate).toFixed(4);
-            currentRateDisplay.textContent = `Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR (Fictional)`;
-        }
-        
-        // --- Clipboard Functions ---
-
-        /**
-         * Copies the converted result text to the clipboard.
-         */
-        function copyResult() {
-            const textToCopy = resultDisplay.textContent.trim();
-            
-            // Use modern clipboard API first
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    showCopySuccess();
-                }).catch(err => {
-                    console.error('Failed to copy using clipboard API: ', err);
-                    // Fallback attempt (for iframe restrictions)
-                    fallbackCopyTextToClipboard(textToCopy);
-                });
-            } else {
-                // Fallback for older browsers or restricted environments
-                fallbackCopyTextToClipboard(textToCopy);
-            }
-        }
-
-        /**
-         * Fallback for older browsers or environments without full clipboard support.
-         */
-        function fallbackCopyTextToClipboard(text) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            
-            // Avoid scrolling to bottom
-            textArea.style.position = "fixed";
-            textArea.style.opacity = 0; 
-
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    showCopySuccess();
-                } else {
-                    console.error('Fallback copy failed.');
-                }
-            } catch (err) {
-                console.error('Oops, unable to copy', err);
-            }
-
-            document.body.removeChild(textArea);
-        }
-
-        /**
-         * Shows the "Copied" message temporarily.
-         */
-        function showCopySuccess() {
-            copyStatus.classList.remove('hidden');
-            setTimeout(() => {
-                copyStatus.classList.add('hidden');
-            }, 2000);
-        }
-
-        /**
-         * Pastes clipboard content into the amount input field.
-         */
-        function pasteInput() {
-            if (navigator.clipboard && navigator.clipboard.readText) {
-                navigator.clipboard.readText().then(text => {
-                    // Sanitize the pasted text to allow only digits and one decimal point
-                    const sanitizedText = text.replace(/[^0-9.]/g, '');
-                    amountInput.value = sanitizedText || '0';
-                    manualInputConvert();
-                    showPasteStatus('Pasted successfully! 📋', 'text-blue-600');
-                }).catch(err => {
-                    console.error('Failed to read clipboard via button: ', err);
-                    showPasteStatus('Paste failed. Use CTRL/CMD+V to paste manually.', 'text-red-600');
-                });
-            } else {
-                showPasteStatus('Paste API not supported. Use CTRL/CMD+V to paste manually.', 'text-red-600');
-            }
-        }
-        
-        /**
-         * Shows a temporary status message for the paste operation.
-         */
-        function showPasteStatus(message, colorClass) {
-            pasteStatus.textContent = message;
-            pasteStatus.className = `mt-1 text-xs font-medium ${colorClass} text-right`;
-            pasteStatus.classList.remove('hidden');
-            setTimeout(() => {
-                pasteStatus.classList.add('hidden');
-            }, 3000);
-        }
-
-        // --- Keypad/Manual Input Handlers ---
-
-        /**
-         * Appends value from keypad to the input field.
-         */
-        function appendToInput(val) {
-            let current = amountInput.value.replace(/^0+/, ''); // Remove leading zero unless it's the only character
-            if (current === '') current = '0';
-            
-            if (val === '.') {
-                if (!current.includes('.')) {
-                    amountInput.value = current + '.';
-                }
-            } else {
-                if (current === '0') {
-                    amountInput.value = val;
-                } else {
-                    amountInput.value = current + val;
-                }
-            }
-            manualInputConvert();
-        }
-
-        /**
-         * Clears the input field.
-         */
-        function clearInput() {
-            amountInput.value = '0';
-            manualInputConvert();
-        }
-
-        /**
-         * Deletes the last character in the input field.
-         */
-        function backspaceInput() {
-            let current = amountInput.value;
-            if (current.length > 1 && current !== '0') {
-                amountInput.value = current.slice(0, -1);
-            } else {
-                amountInput.value = '0';
-            }
-            manualInputConvert();
-        }
-
-        /**
-         * Handles direct manual input change and triggers conversion.
-         */
-        function manualInputConvert() {
-            // Sanitize input to allow only digits and one decimal point
-            amountInput.value = amountInput.value.replace(/[^0-9.]/g, '');
-            // Ensure leading zero if input is empty
-            if (amountInput.value === '') {
-                amountInput.value = '0';
-            }
-            convert();
-        }
-
-        // --- Event Listeners and Initialization ---
-
-        document.addEventListener('DOMContentLoaded', () => {
-            populateCurrencies();
-            fromCurrencySelect.addEventListener('change', convert);
-            copyButton.addEventListener('click', copyResult); 
-            pasteButton.addEventListener('click', pasteInput); // Added listener for Paste button
-            convert();
-        });
-    </script>
-
 </body>
 </html>
