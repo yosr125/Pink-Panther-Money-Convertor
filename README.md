@@ -96,7 +96,8 @@
                     <input type="text" id="amountInput" value="0" class="w-full text-6xl font-mono text-right border-none focus:ring-0 p-0 bg-transparent tracking-tight" placeholder="0" oninput="manualInputConvert()">
 
                     <div class="text-sm text-gray-500 mt-2 text-right">
-                        <span id="currentRateDisplay">Fetching live rates... ⏳</span>
+                        <!-- Initial status is set to static rates -->
+                        <span id="currentRateDisplay">Static Rates Loaded (Immediate) ⚡</span>
                     </div>
                     <p id="pasteStatus" class="mt-1 text-xs font-medium text-blue-600 hidden text-right">Pasted successfully! 📋</p>
                 </div>
@@ -167,18 +168,20 @@
         const pasteButton = document.getElementById('pasteButton'); 
         const pasteStatus = document.getElementById('pasteStatus'); 
         const currencyLegend = document.getElementById('currencyLegend');
-
-        let RATES = { "EUR": 1.00 }; 
         
+        // Define the static rates we will use immediately
         const FALLBACK_RATES = {
             "PLN": 4.34, "GBP": 0.856, "SEK": 11.10, "DKK": 7.46, 
             "USD": 1.07, "JPY": 178.00, "CAD": 1.46, "AUD": 1.62, 
             "CHF": 0.97, "NOK": 11.95, "HUF": 385.00, "CZK": 24.80,
             "EUR": 1.00 
         };
+        
+        // Initialize RATES with the static data immediately
+        let RATES = FALLBACK_RATES; 
 
-        const targetCurrencies = ["PLN", "GBP", "SEK", "DKK", "USD", "JPY", "CAD", "AUD", "CHF", "NOK", "HUF", "CZK"];
-
+        // Removed the targetCurrencies array as it's only needed for the API call
+        
         const CURRENCY_SYMBOLS = {
             "EUR": { symbol: "€", name: "Euro" },
             "PLN": { symbol: "zł", name: "Polish Złoty" },
@@ -195,91 +198,8 @@
             "CZK": { symbol: "Kč", name: "Czech Koruna" },
         };
 
-        // Utility for Exponential Backoff (MANDATORY for API calls)
-        async function exponentialBackoffFetch(url, options, retries = 5) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response;
-                } catch (error) {
-                    if (i < retries - 1) {
-                        const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    } else {
-                        throw error;
-                    }
-                }
-            }
-        }
+        // --- Removed fetchExchangeRates and exponentialBackoffFetch functions ---
         
-        // Removed const API_KEY = "";
-        // The API URL now relies on the environment to handle authentication automatically.
-
-        // Fetches real-time exchange rates using the Gemini API and Google Search.
-        async function fetchExchangeRates() {
-            currentRateDisplay.innerHTML = 'Fetching live rates... ⏳';
-            // Simplified API URL to avoid issues with explicit key injection
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent`;
-
-            const systemPrompt = "You are a specialized financial data parser. Analyze the provided Google Search results and output a single JSON object containing only the most recent currency exchange rates relative to 1 Euro (EUR). You must strictly adhere to the provided JSON schema. The keys are currency codes, and the values are the numerical exchange rates (as standard JavaScript numbers) for 1 EUR to that currency. If a rate is not found, use 0.00 as a placeholder.";
-            const userQuery = `Current real-time exchange rates for 1 EUR to ${targetCurrencies.join(', ')}. Provide the exchange rate for EUR to EUR as 1.00.`;
-
-            const schemaProperties = targetCurrencies.reduce((acc, code) => {
-                acc[code] = { "type": "NUMBER", "description": `Exchange rate of 1 EUR to ${code}` };
-                return acc;
-            }, {});
-            schemaProperties["EUR"] = { "type": "NUMBER", "description": "1 EUR to EUR (must be 1.00)" };
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                tools: [{ "google_search": {} }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: schemaProperties,
-                        required: [...targetCurrencies, "EUR"]
-                    }
-                }
-            };
-
-            const options = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            };
-
-            try {
-                const response = await exponentialBackoffFetch(apiUrl, options);
-                const result = await response.json();
-                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (jsonText) {
-                    const fetchedRates = JSON.parse(jsonText);
-                    // Merge/Overwrite FALLBACK_RATES with successfully fetched rates.
-                    RATES = { ...FALLBACK_RATES, ...fetchedRates };
-                    console.log('Successfully fetched and merged RATES (Live/Fallback):', RATES);
-                } else {
-                    throw new Error("API returned no valid JSON text.");
-                }
-            } catch (error) {
-                // If it fails (e.g., 401 or network issue), it will fall back to static rates gracefully.
-                console.error("Failed to fetch live rates, using fallback rates.", error);
-                RATES = FALLBACK_RATES;
-                currentRateDisplay.textContent = 'Using Fallback Rates (Static) ⚠️';
-                console.warn("WARNING: Using reliable, static fallback rates. Conversion accuracy is still guaranteed, but rates are not real-time.");
-            } finally {
-                // Regardless of success, update the UI
-                populateCurrencies();
-                displayCurrencyLegend();
-                convert();
-            }
-        }
-
         // Displays the currency codes, symbols, and names in the legend area.
         function displayCurrencyLegend() {
             currencyLegend.innerHTML = '';
@@ -336,9 +256,8 @@
                 
                 if (fromRate) {
                     const rateToOneEuro = (1 / fromRate).toFixed(4);
-                    currentRateDisplay.textContent = currentRateDisplay.textContent.includes('Fallback') 
-                        ? `Using Fallback Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`
-                        : `Current Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
+                    // Simplified rate display for static mode
+                    currentRateDisplay.textContent = `Static Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
                 } else {
                      currentRateDisplay.textContent = `Error: Rate for ${fromCurrency} missing or zero.`;
                 }
@@ -360,9 +279,7 @@
             resultDisplay.textContent = `${convertedAmount.toFixed(2)} EUR`;
             
             const rateToOneEuro = (1 / fromRate).toFixed(4);
-             currentRateDisplay.textContent = currentRateDisplay.textContent.includes('Fallback') 
-                ? `Using Fallback Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`
-                : `Current Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
+            currentRateDisplay.textContent = `Static Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
         }
         
         // Copies the converted result text.
@@ -485,7 +402,11 @@
         // --- Initialization ---
 
         document.addEventListener('DOMContentLoaded', () => {
-            fetchExchangeRates(); 
+            // Immediately run UI setup using static rates
+            populateCurrencies();
+            displayCurrencyLegend();
+            convert();
+            
             fromCurrencySelect.addEventListener('change', convert);
             copyButton.addEventListener('click', copyResult); 
             pasteButton.addEventListener('click', pasteInput); 
