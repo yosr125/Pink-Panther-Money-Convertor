@@ -20,7 +20,6 @@
             font-family: 'Inter', sans-serif;
             background-color: var(--panther-light-pink); /* Lighter pink background */
             background-image: linear-gradient(135deg, #FFCCD2 0%, #FFB5C5 100%); /* Soft pink gradient */
-            /* Removed centering to allow content to span full width of its container */
             padding: 1rem; 
             margin: 0;
             min-height: 100vh; /* Ensure background covers full height */
@@ -29,12 +28,13 @@
             background-color: var(--panther-light);
             border: 6px solid var(--panther-deep-pink); 
             box-shadow: 0 8px 25px rgba(233, 30, 99, 0.5), 0 0 8px rgba(0, 0, 0, 0.2);
-            /* Removed fixed max-width from CSS to allow Tailwind classes to control size */
         }
+        /* Keypad grid kept at 4 columns */
         .keypad-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 0.4rem; 
+            height: 100%; /* Ensure it fills the height of its container in the grid */
         }
         .calc-btn {
             background-color: var(--calc-bg);
@@ -67,103 +67,92 @@
 </head>
 <body>
 
-    <!-- 
-        UPDATED: Changed max-w-4xl to max-w-7xl (1280px) to make the converter much wider,
-        effectively filling the page on most displays while keeping it centered and stylish.
-    -->
+    <!-- max-w-7xl makes the converter wide, mx-auto centers it -->
     <div id="app" class="panther-card max-w-7xl w-full p-6 rounded-2xl mx-auto my-8">
-        <h1 class="text-4xl text-center font-bold mb-3" style="font-family: 'Bebas Neue', sans-serif; color: var(--panther-dark);">
+        <h1 class="text-4xl text-center font-bold mb-6" style="font-family: 'Bebas Neue', sans-serif; color: var(--panther-dark);">
             <span class="text-xs block tracking-widest leading-none">THE INTERNATIONAL HEIST FUND 🕵️‍♀️</span>
             <span class="text-5xl text-pink-600">P<span class="text-gray-800">I</span>NK</span> CONVERTER 🐾
         </h1>
 
-        <!-- Conversion Rates (Real-Time Rates Relative to 1 EUR) -->
-        <script>
-            // --- 🕵️‍♀️ REAL-TIME EXCHANGE RATES (1 EUR = X Currency) ---
-            // These rates are accurate as of the last available data but are not live streaming.
-            const RATES = {
-                "EUR": 1.00,   // Euro (The Base)
-                "PLN": 4.34,   // Polish Złoty 
-                "GBP": 0.856,  // British Pound 
-                "SEK": 11.10,  // Swedish Krona 
-                "DKK": 7.46,   // Danish Krone 
-                "USD": 1.07,   // US Dollar
-                "JPY": 178.00, // Japanese Yen
-                "CAD": 1.46,   // Canadian Dollar
-                "AUD": 1.62,   // Australian Dollar
-                "CHF": 0.97,   // Swiss Franc
-                "NOK": 11.95,  // Norwegian Krone
-                "HUF": 385.00, // Hungarian Forint
-                "CZK": 24.80,  // Czech Koruna
-            };
-        </script>
+        <!-- 
+            Responsive two-column layout from medium screens and up.
+        -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <!-- Display/Input Area -->
-        <div class="mb-6 bg-white border border-gray-300 rounded-xl shadow-inner p-4">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center space-x-2">
-                    <label for="fromCurrencySelect" class="text-sm font-semibold text-gray-500">I have: 💎</label>
-                    <!-- NEW PASTE BUTTON -->
-                    <button id="pasteButton" class="text-xs px-2 py-0.5 rounded text-white bg-pink-500 hover:bg-pink-600 transition duration-150 shadow-sm" title="Paste Value">
-                        PASTE 📋
-                    </button>
+            <!-- Column 1: Input and Result Displays -->
+            <div class="flex flex-col justify-between h-full space-y-4">
+                <!-- Display/Input Area -->
+                <div class="bg-white border border-gray-300 rounded-xl shadow-inner p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <label for="fromCurrencySelect" class="text-sm font-semibold text-gray-500">I have: 💎</label>
+                            <!-- PASTE BUTTON -->
+                            <button id="pasteButton" class="text-xs px-2 py-0.5 rounded text-white bg-pink-500 hover:bg-pink-600 transition duration-150 shadow-sm" title="Paste Value">
+                                PASTE 📋
+                            </button>
+                        </div>
+                        <select id="fromCurrencySelect" class="bg-gray-100 border border-gray-300 rounded-md p-2 text-xl font-mono focus:ring-panther-deep-pink focus:border-panther-deep-pink transition duration-150">
+                            <!-- Options populated by JS -->
+                        </select>
+                    </div>
+                    
+                    <input type="text" id="amountInput" value="0" class="w-full text-6xl font-mono text-right border-none focus:ring-0 p-0 bg-transparent tracking-tight" placeholder="0" oninput="manualInputConvert()">
+
+                    <div class="text-sm text-gray-500 mt-2 text-right">
+                        <span id="currentRateDisplay">Fetching live rates... ⏳</span>
+                    </div>
+                    <!-- PASTE STATUS MESSAGE -->
+                    <p id="pasteStatus" class="mt-1 text-xs font-medium text-blue-600 hidden text-right">Pasted successfully! 📋</p>
                 </div>
-                <select id="fromCurrencySelect" class="bg-gray-100 border border-gray-300 rounded-md p-2 text-xl font-mono focus:ring-panther-deep-pink focus:border-panther-deep-pink transition duration-150">
-                    <!-- Options populated by JS -->
-                </select>
+
+                <!-- Result Display -->
+                <div class="text-center p-4 bg-gray-100 rounded-xl border border-gray-300">
+                    <p class="text-lg font-semibold text-gray-500">Converted Value (The Loot) 💰</p>
+                    <div class="flex items-center justify-center space-x-3">
+                        <p id="resultDisplay" class="text-6xl font-extrabold font-mono transition duration-300 result-text-red">
+                            0.00 EUR
+                        </p>
+                        <button id="copyButton" class="text-2xl p-3 rounded-full text-white bg-pink-500 hover:bg-pink-600 transition duration-150 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50" title="Copy Result">
+                            <!-- Copy Icon SVG -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v2M9 16l3-3m0 0l3 3m-3-3v8" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="statusMessage" class="mt-2 text-sm text-gray-700 font-semibold italic">A small prize. Better luck next time. 💔</p>
+                    <p id="copyStatus" class="mt-1 text-xs font-medium text-green-600 hidden">Copied to clipboard! ✅</p>
+                </div>
             </div>
-            
-            <input type="text" id="amountInput" value="0" class="w-full text-6xl font-mono text-right border-none focus:ring-0 p-0 bg-transparent tracking-tight" placeholder="0" oninput="manualInputConvert()">
 
-            <div class="text-sm text-gray-500 mt-2 text-right">
-                <span id="currentRateDisplay">...</span>
+            <!-- Column 2: Calculator Keypad -->
+            <div>
+                <!-- Calculator Keypad and Currency Buttons -->
+                <div class="keypad-grid h-full">
+                    <!-- Row 1 -->
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('7')">7</button>
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('8')">8</button>
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('9')">9</button>
+                    <button class="calc-btn action rounded-xl text-sm bg-pink-600 hover:bg-pink-700" onclick="clearInput()">CLEAR 🗑️</button>
+                    
+                    <!-- Row 2 -->
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('4')">4</button>
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('5')">5</button>
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('6')">6</button>
+                    <button class="calc-btn action rounded-xl text-sm bg-pink-700 hover:bg-pink-800" onclick="backspaceInput()">DELETE ❌</button>
+
+                    <!-- Row 3 -->
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('1')">1</button>
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('2')">2</button>
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('3')">3</button>
+                    <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('.')">.</button>
+
+                    <!-- Row 4 -->
+                    <button class="calc-btn action rounded-xl text-2xl col-span-2" onclick="appendToInput('0')">0</button>
+                    <button class="calc-btn action rounded-xl text-lg col-span-2 bg-pink-500 hover:bg-pink-600" onclick="convert()">CONVERT 🐾</button>
+                </div>
             </div>
-            <!-- NEW PASTE STATUS MESSAGE -->
-            <p id="pasteStatus" class="mt-1 text-xs font-medium text-blue-600 hidden text-right">Pasted successfully! 📋</p>
-        </div>
 
-        <!-- Result Display -->
-        <div class="text-center mb-6 p-4 bg-gray-100 rounded-xl border border-gray-300">
-            <p class="text-lg font-semibold text-gray-500">Converted Value (The Loot) 💰</p>
-            <div class="flex items-center justify-center space-x-3">
-                <p id="resultDisplay" class="text-6xl font-extrabold font-mono transition duration-300 result-text-red">
-                    0.00 EUR
-                </p>
-                <button id="copyButton" class="text-2xl p-3 rounded-full text-white bg-pink-500 hover:bg-pink-600 transition duration-150 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50" title="Copy Result">
-                    <!-- Copy Icon SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v2M9 16l3-3m0 0l3 3m-3-3v8" />
-                    </svg>
-                </button>
-            </div>
-            <p id="statusMessage" class="mt-2 text-sm text-gray-700 font-semibold italic">A small prize. Better luck next time. 💔</p>
-            <p id="copyStatus" class="mt-1 text-xs font-medium text-green-600 hidden">Copied to clipboard! ✅</p>
-        </div>
-
-        <!-- Calculator Keypad and Currency Buttons -->
-        <div class="keypad-grid">
-            <!-- Row 1 -->
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('7')">7</button>
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('8')">8</button>
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('9')">9</button>
-            <button class="calc-btn action rounded-xl text-sm bg-pink-600 hover:bg-pink-700" onclick="clearInput()">CLEAR 🗑️</button>
-            
-            <!-- Row 2 -->
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('4')">4</button>
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('5')">5</button>
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('6')">6</button>
-            <button class="calc-btn action rounded-xl text-sm bg-pink-700 hover:bg-pink-800" onclick="backspaceInput()">DELETE ❌</button>
-
-            <!-- Row 3 -->
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('1')">1</button>
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('2')">2</button>
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('3')">3</button>
-            <button class="calc-btn action rounded-xl text-2xl" onclick="appendToInput('.')">.</button>
-
-            <!-- Row 4 -->
-            <button class="calc-btn action rounded-xl text-2xl col-span-2" onclick="appendToInput('0')">0</button>
-            <button class="calc-btn action rounded-xl text-lg col-span-2 bg-pink-500 hover:bg-pink-600" onclick="convert()">CONVERT 🐾</button>
-        </div>
+        </div> <!-- End of md:grid-cols-2 container -->
     </div>
 
     <script>
@@ -177,25 +166,152 @@
         const pasteButton = document.getElementById('pasteButton'); 
         const pasteStatus = document.getElementById('pasteStatus'); 
 
+        // Initial RATES object. EUR is 1.00 as it is the base currency.
+        let RATES = { "EUR": 1.00 }; 
+        
+        // Fallback rates used if the live fetch fails.
+        const FALLBACK_RATES = {
+            "PLN": 4.34, "GBP": 0.856, "SEK": 11.10, "DKK": 7.46, 
+            "USD": 1.07, "JPY": 178.00, "CAD": 1.46, "AUD": 1.62, 
+            "CHF": 0.97, "NOK": 11.95, "HUF": 385.00, "CZK": 24.80,
+            "EUR": 1.00 
+        };
+
+        const targetCurrencies = ["PLN", "GBP", "SEK", "DKK", "USD", "JPY", "CAD", "AUD", "CHF", "NOK", "HUF", "CZK"];
+
+        // --- CURRENCY SYMBOLS (These are static) ---
+        const CURRENCY_SYMBOLS = {
+            "EUR": "€",
+            "PLN": "zł",
+            "GBP": "£",
+            "SEK": "kr",
+            "DKK": "kr",
+            "USD": "$",
+            "JPY": "¥",
+            "CAD": "C$",
+            "AUD": "A$",
+            "CHF": "Fr",
+            "NOK": "kr",
+            "HUF": "Ft",
+            "CZK": "Kč",
+        };
+
+        // --- Utility for Exponential Backoff (MANDATORY for API calls) ---
+        async function exponentialBackoffFetch(url, options, retries = 5) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        // Throw error to trigger retry or final catch block
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i < retries - 1) {
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } else {
+                        throw error; // Re-throw the error on the final attempt
+                    }
+                }
+            }
+        }
+        
         // --- Core Functions ---
 
         /**
+         * Fetches real-time exchange rates using the Gemini API and Google Search.
+         */
+        async function fetchExchangeRates() {
+            // 1. Set Loading State
+            currentRateDisplay.innerHTML = 'Fetching live rates... ⏳';
+            
+            // The API Key is injected by the environment. We use the required model URL structure.
+            const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=';
+
+            const systemPrompt = "You are a specialized financial data parser. Analyze the provided Google Search results and output a single JSON object containing only the most recent currency exchange rates relative to 1 Euro (EUR). You must strictly adhere to the provided JSON schema. The keys are currency codes, and the values are the numerical exchange rates (as standard JavaScript numbers) for 1 EUR to that currency.";
+            const userQuery = `Current real-time exchange rates for 1 EUR to ${targetCurrencies.join(', ')}.`;
+
+            // Dynamically create the JSON schema for type safety
+            const schemaProperties = targetCurrencies.reduce((acc, code) => {
+                acc[code] = { "type": "NUMBER", "description": `Exchange rate of 1 EUR to ${code}` };
+                return acc;
+            }, {});
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: schemaProperties,
+                        required: targetCurrencies
+                    }
+                }
+            };
+
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            };
+
+            try {
+                const response = await exponentialBackoffFetch(apiUrl, options);
+                const result = await response.json();
+
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (jsonText) {
+                    const fetchedRates = JSON.parse(jsonText);
+                    // Merge fetched rates with the base EUR rate
+                    RATES = { "EUR": 1.00, ...fetchedRates };
+                    console.log('Successfully fetched and set new RATES:', RATES);
+                } else {
+                    throw new Error("API returned no valid JSON text.");
+                }
+            } catch (error) {
+                console.error("Failed to fetch live rates, using fallback rates.", error);
+                // Specific log for the reported error
+                if (error.message.includes('401')) {
+                    console.error("401 Authentication Error: The runtime environment failed to inject a valid API key. Using static fallback rates.");
+                }
+                RATES = FALLBACK_RATES;
+            } finally {
+                // Regardless of success, update the UI
+                populateCurrencies();
+                convert();
+            }
+        }
+
+
+        /**
          * Populates the currency dropdown based on the RATES object.
-         * Prioritizes GBP, PLN, SEK, DKK.
          */
         function populateCurrencies() {
-            // GBP is now the first priority!
+            // Priority list for European currencies
             const prioritized = ["GBP", "PLN", "SEK", "DKK", "EUR"];
-            const other = Object.keys(RATES).filter(c => !prioritized.includes(c)).sort();
             
-            const sortedCurrencies = [...prioritized.filter(c => RATES.hasOwnProperty(c)), ...other];
+            // Filter and sort the rest
+            const availableCodes = Object.keys(RATES).filter(c => RATES[c] !== undefined);
+            const other = availableCodes.filter(c => !prioritized.includes(c)).sort();
+            
+            const sortedCurrencies = [...prioritized.filter(c => availableCodes.includes(c)), ...other];
 
             fromCurrencySelect.innerHTML = '';
             
             sortedCurrencies.forEach(code => {
                 const option = document.createElement('option');
                 option.value = code;
-                option.textContent = code;
+                
+                // Get symbol and format text: Code + Symbol
+                const symbol = CURRENCY_SYMBOLS[code] || ''; 
+                option.textContent = `${code} ${symbol}`; 
+                
                 fromCurrencySelect.appendChild(option);
             });
             
@@ -215,7 +331,7 @@
                 resultDisplay.textContent = '0.00 EUR';
                 resultDisplay.className = 'text-6xl font-extrabold font-mono transition duration-300 result-text-red';
                 statusMessage.textContent = "Enter an amount for the Pink Panther to check! 🕵️‍♀️";
-                currentRateDisplay.textContent = `Rate: 1 ${fromCurrency} = ${(1 / RATES[fromCurrency]).toFixed(4)} EUR (Approx. Real-Time)`;
+                currentRateDisplay.textContent = `Live Rates Check: 1 ${fromCurrency} = ${(1 / (RATES[fromCurrency] || 1)).toFixed(4)} EUR`;
                 return;
             }
 
@@ -225,8 +341,8 @@
             if (!fromRate) {
                 resultDisplay.textContent = 'ERROR';
                 resultDisplay.className = 'text-6xl font-extrabold font-mono transition duration-300 result-text-red';
-                statusMessage.textContent = "Error: Currency rate missing!";
-                currentRateDisplay.textContent = `Rate: N/A`;
+                statusMessage.textContent = "Error: Currency rate missing! Using Fallback.";
+                currentRateDisplay.textContent = `Live Rates Check: N/A`;
                 return;
             }
 
@@ -247,16 +363,18 @@
             
             // Update Rate Display
             const rateToOneEuro = (1 / fromRate).toFixed(4);
-            currentRateDisplay.textContent = `Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR (Approx. Real-Time)`;
+            currentRateDisplay.textContent = `Live Rates Check: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
         }
         
         // --- Clipboard Functions ---
 
         /**
-         * Copies the converted result text to the clipboard.
+         * Copies the converted result text (the number only, without "EUR") to the clipboard.
          */
         function copyResult() {
-            const textToCopy = resultDisplay.textContent.trim();
+            const fullText = resultDisplay.textContent.trim();
+            // IMPORTANT: Strip the 'EUR' text before copying
+            const textToCopy = fullText.replace('EUR', '').trim(); 
             
             // Use modern clipboard API first
             if (navigator.clipboard) {
@@ -404,11 +522,12 @@
         // --- Event Listeners and Initialization ---
 
         document.addEventListener('DOMContentLoaded', () => {
-            populateCurrencies();
+            // Start the process by fetching the live rates
+            fetchExchangeRates(); 
+            
             fromCurrencySelect.addEventListener('change', convert);
             copyButton.addEventListener('click', copyResult); 
             pasteButton.addEventListener('click', pasteInput); 
-            convert();
         });
     </script>
 
