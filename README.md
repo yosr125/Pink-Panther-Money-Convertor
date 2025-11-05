@@ -118,10 +118,19 @@
         <!-- Result Display -->
         <div class="text-center mb-4 p-3 bg-gray-100 rounded-lg border border-gray-300">
             <p class="text-base font-semibold text-gray-500">Converted Value (The Loot) 💰</p>
-            <p id="resultDisplay" class="text-5xl font-extrabold font-mono transition duration-300 result-text-red">
-                0.00 EUR
-            </p>
+            <div class="flex items-center justify-center space-x-2">
+                <p id="resultDisplay" class="text-5xl font-extrabold font-mono transition duration-300 result-text-red">
+                    0.00 EUR
+                </p>
+                <button id="copyButton" class="text-xl p-2 rounded-full text-white bg-pink-500 hover:bg-pink-600 transition duration-150 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50" title="Copy Result">
+                    <!-- Copy Icon SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v2M9 16l3-3m0 0l3 3m-3-3v8" />
+                    </svg>
+                </button>
+            </div>
             <p id="statusMessage" class="mt-1 text-xs text-gray-700 font-semibold italic">A small prize. Better luck next time. 💔</p>
+            <p id="copyStatus" class="mt-1 text-xs font-medium text-green-600 hidden">Copied to clipboard! ✅</p>
         </div>
 
         <!-- Calculator Keypad and Currency Buttons -->
@@ -156,6 +165,8 @@
         const resultDisplay = document.getElementById('resultDisplay');
         const currentRateDisplay = document.getElementById('currentRateDisplay');
         const statusMessage = document.getElementById('statusMessage');
+        const copyButton = document.getElementById('copyButton');
+        const copyStatus = document.getElementById('copyStatus');
 
         // --- Core Functions ---
 
@@ -230,6 +241,68 @@
             currentRateDisplay.textContent = `Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR (Fictional)`;
         }
         
+        // --- Clipboard Functions ---
+
+        /**
+         * Copies the converted result text to the clipboard.
+         */
+        function copyResult() {
+            const textToCopy = resultDisplay.textContent.trim();
+            
+            // Use modern clipboard API first
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showCopySuccess();
+                }).catch(err => {
+                    console.error('Failed to copy using clipboard API: ', err);
+                    // Fallback attempt (for iframe restrictions)
+                    fallbackCopyTextToClipboard(textToCopy);
+                });
+            } else {
+                // Fallback for older browsers or restricted environments
+                fallbackCopyTextToClipboard(textToCopy);
+            }
+        }
+
+        /**
+         * Fallback for older browsers or environments without full clipboard support.
+         */
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.position = "fixed";
+            textArea.style.opacity = 0; 
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess();
+                } else {
+                    console.error('Fallback copy failed.');
+                }
+            } catch (err) {
+                console.error('Oops, unable to copy', err);
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        /**
+         * Shows the "Copied" message temporarily.
+         */
+        function showCopySuccess() {
+            copyStatus.classList.remove('hidden');
+            setTimeout(() => {
+                copyStatus.classList.add('hidden');
+            }, 2000);
+        }
+
         // --- Keypad/Manual Input Handlers ---
 
         /**
@@ -291,9 +364,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             populateCurrencies();
-            // Trigger conversion whenever the currency selection changes
             fromCurrencySelect.addEventListener('change', convert);
-            // Initial conversion check
+            copyButton.addEventListener('click', copyResult); // New listener for the copy button
             convert();
         });
     </script>
