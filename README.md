@@ -1,3 +1,4 @@
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -490,6 +491,9 @@
             pasteButton.addEventListener('click', pasteInput); 
         });
     </script>
+
+</body>
+</html>
 
 </body>
 </html>
