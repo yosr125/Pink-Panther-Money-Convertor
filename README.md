@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -25,29 +25,29 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 0.5rem; /* Reduced overall padding */
+            padding: 0.5rem; 
             margin: 0;
         }
         .panther-card {
             background-color: var(--panther-light);
-            border: 6px solid var(--panther-deep-pink); /* Slightly thinner border */
+            border: 6px solid var(--panther-deep-pink); 
             box-shadow: 0 8px 25px rgba(233, 30, 99, 0.5), 0 0 8px rgba(0, 0, 0, 0.2);
-            /* Adjust max-width for better use of space */
-            max-width: 400px; 
+            /* INCREASED WIDTH: Set max-width to 550px for a wider feel */
+            max-width: 550px; 
             width: 100%;
         }
         .keypad-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 0.4rem; /* Reduced gap */
+            gap: 0.4rem; 
         }
         .calc-btn {
             background-color: var(--calc-bg);
             color: var(--calc-btn-text);
             font-weight: 600;
             transition: background-color 0.1s ease, transform 0.1s ease;
-            padding: 0.8rem; /* Reduced button padding */
-            min-height: 50px; /* Ensure a minimum touch target size */
+            padding: 0.8rem; 
+            min-height: 50px; 
         }
         .calc-btn:hover {
             background-color: #f0cce9; 
@@ -102,7 +102,13 @@
         <!-- Display/Input Area -->
         <div class="mb-4 bg-white border border-gray-300 rounded-lg shadow-inner p-3">
             <div class="flex items-center justify-between mb-2">
-                <label for="fromCurrencySelect" class="text-xs font-semibold text-gray-500">I have: 💎</label>
+                <div class="flex items-center space-x-2">
+                    <label for="fromCurrencySelect" class="text-xs font-semibold text-gray-500">I have: 💎</label>
+                    <!-- NEW PASTE BUTTON -->
+                    <button id="pasteButton" class="text-xs px-2 py-0.5 rounded text-white bg-pink-500 hover:bg-pink-600 transition duration-150 shadow-sm" title="Paste Value">
+                        PASTE 📋
+                    </button>
+                </div>
                 <select id="fromCurrencySelect" class="bg-gray-100 border border-gray-300 rounded-md p-1 text-lg font-mono focus:ring-panther-deep-pink focus:border-panther-deep-pink transition duration-150">
                     <!-- Options populated by JS -->
                 </select>
@@ -113,6 +119,8 @@
             <div class="text-xs text-gray-500 mt-1 text-right">
                 <span id="currentRateDisplay">...</span>
             </div>
+            <!-- NEW PASTE STATUS MESSAGE -->
+            <p id="pasteStatus" class="mt-1 text-xs font-medium text-blue-600 hidden text-right">Pasted successfully! 📋</p>
         </div>
 
         <!-- Result Display -->
@@ -167,6 +175,8 @@
         const statusMessage = document.getElementById('statusMessage');
         const copyButton = document.getElementById('copyButton');
         const copyStatus = document.getElementById('copyStatus');
+        const pasteButton = document.getElementById('pasteButton'); // Added
+        const pasteStatus = document.getElementById('pasteStatus'); // Added
 
         // --- Core Functions ---
 
@@ -303,6 +313,38 @@
             }, 2000);
         }
 
+        /**
+         * Pastes clipboard content into the amount input field.
+         */
+        function pasteInput() {
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                navigator.clipboard.readText().then(text => {
+                    // Sanitize the pasted text to allow only digits and one decimal point
+                    const sanitizedText = text.replace(/[^0-9.]/g, '');
+                    amountInput.value = sanitizedText || '0';
+                    manualInputConvert();
+                    showPasteStatus('Pasted successfully! 📋', 'text-blue-600');
+                }).catch(err => {
+                    console.error('Failed to read clipboard via button: ', err);
+                    showPasteStatus('Paste failed. Use CTRL/CMD+V to paste manually.', 'text-red-600');
+                });
+            } else {
+                showPasteStatus('Paste API not supported. Use CTRL/CMD+V to paste manually.', 'text-red-600');
+            }
+        }
+        
+        /**
+         * Shows a temporary status message for the paste operation.
+         */
+        function showPasteStatus(message, colorClass) {
+            pasteStatus.textContent = message;
+            pasteStatus.className = `mt-1 text-xs font-medium ${colorClass} text-right`;
+            pasteStatus.classList.remove('hidden');
+            setTimeout(() => {
+                pasteStatus.classList.add('hidden');
+            }, 3000);
+        }
+
         // --- Keypad/Manual Input Handlers ---
 
         /**
@@ -365,7 +407,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             populateCurrencies();
             fromCurrencySelect.addEventListener('change', convert);
-            copyButton.addEventListener('click', copyResult); // New listener for the copy button
+            copyButton.addEventListener('click', copyResult); 
+            pasteButton.addEventListener('click', pasteInput); // Added listener for Paste button
             convert();
         });
     </script>
