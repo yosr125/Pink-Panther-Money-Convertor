@@ -214,10 +214,14 @@
             }
         }
         
+        // Removed const API_KEY = "";
+        // The API URL now relies on the environment to handle authentication automatically.
+
         // Fetches real-time exchange rates using the Gemini API and Google Search.
         async function fetchExchangeRates() {
             currentRateDisplay.innerHTML = 'Fetching live rates... ⏳';
-            const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=';
+            // Simplified API URL to avoid issues with explicit key injection
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent`;
 
             const systemPrompt = "You are a specialized financial data parser. Analyze the provided Google Search results and output a single JSON object containing only the most recent currency exchange rates relative to 1 Euro (EUR). You must strictly adhere to the provided JSON schema. The keys are currency codes, and the values are the numerical exchange rates (as standard JavaScript numbers) for 1 EUR to that currency. If a rate is not found, use 0.00 as a placeholder.";
             const userQuery = `Current real-time exchange rates for 1 EUR to ${targetCurrencies.join(', ')}. Provide the exchange rate for EUR to EUR as 1.00.`;
@@ -262,8 +266,10 @@
                     throw new Error("API returned no valid JSON text.");
                 }
             } catch (error) {
+                // If it fails (e.g., 401 or network issue), it will fall back to static rates gracefully.
                 console.error("Failed to fetch live rates, using fallback rates.", error);
                 RATES = FALLBACK_RATES;
+                currentRateDisplay.textContent = 'Using Fallback Rates (Static) ⚠️';
                 console.warn("WARNING: Using reliable, static fallback rates. Conversion accuracy is still guaranteed, but rates are not real-time.");
             } finally {
                 // Regardless of success, update the UI
@@ -329,7 +335,9 @@
                 
                 if (fromRate) {
                     const rateToOneEuro = (1 / fromRate).toFixed(4);
-                    currentRateDisplay.textContent = `Current Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
+                    currentRateDisplay.textContent = currentRateDisplay.textContent.includes('Fallback') 
+                        ? `Using Fallback Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`
+                        : `Current Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
                 } else {
                      currentRateDisplay.textContent = `Error: Rate for ${fromCurrency} missing or zero.`;
                 }
@@ -351,7 +359,9 @@
             resultDisplay.textContent = `${convertedAmount.toFixed(2)} EUR`;
             
             const rateToOneEuro = (1 / fromRate).toFixed(4);
-            currentRateDisplay.textContent = `Current Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
+             currentRateDisplay.textContent = currentRateDisplay.textContent.includes('Fallback') 
+                ? `Using Fallback Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`
+                : `Current Rate: 1 ${fromCurrency} = ${rateToOneEuro} EUR`;
         }
         
         // Copies the converted result text.
